@@ -1,2 +1,3 @@
 [x] center buildings when placed
-[ ] speed upgrades for workers
+[x] speed upgrades for workers
+[ ] flatten grounds feature for workers, select blocks to break(not enemy blocks)

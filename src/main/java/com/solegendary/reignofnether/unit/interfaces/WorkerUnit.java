@@ -13,6 +13,8 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.loading.FMLLoader;
 
 public interface WorkerUnit {
 
@@ -29,7 +31,7 @@ public interface WorkerUnit {
         if (gatherResourcesGoal != null)
             gatherResourcesGoal.tick();
 
-        if(ResearchClient.hasResearch(ResearchWorkerSpeed.itemName)) {
+        if(FMLLoader.getDist() == Dist.CLIENT && ResearchClient.hasResearch(ResearchWorkerSpeed.itemName)) {
             if (buildRepairGoal != null) buildRepairGoal.tick();
             if (gatherResourcesGoal != null) gatherResourcesGoal.tick();
         }
