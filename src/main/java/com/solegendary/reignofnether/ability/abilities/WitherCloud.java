@@ -24,13 +24,14 @@ import java.util.List;
 public class WitherCloud extends Ability {
 
     private static final int CD_MAX_SECONDS = 50;
-    private static final int DURATION_SECONDS = 10;
+    private static final int DURATION_SECONDS = 15;
 
     private final WitherSkeletonUnit witherSkeletonUnit;
 
     public WitherCloud(WitherSkeletonUnit witherSkeletonUnit) {
         super(
                 UnitAction.WITHER_CLOUD,
+                witherSkeletonUnit.level,
                 CD_MAX_SECONDS * ResourceCost.TICKS_PER_SECOND,
                 0,
                 0,

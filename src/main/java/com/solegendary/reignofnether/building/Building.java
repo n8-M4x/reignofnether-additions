@@ -4,15 +4,20 @@ import com.mojang.math.Vector3d;
 import com.solegendary.reignofnether.ReignOfNether;
 import com.solegendary.reignofnether.ability.Ability;
 import com.solegendary.reignofnether.attackwarnings.AttackWarningClientboundPacket;
+import com.solegendary.reignofnether.building.buildings.monsters.DarkWatchtower;
+import com.solegendary.reignofnether.building.buildings.piglins.Bastion;
 import com.solegendary.reignofnether.building.buildings.piglins.FlameSanctuary;
 import com.solegendary.reignofnether.building.buildings.piglins.Fortress;
 import com.solegendary.reignofnether.building.buildings.piglins.Portal;
 import com.solegendary.reignofnether.building.buildings.shared.AbstractBridge;
 import com.solegendary.reignofnether.building.buildings.shared.AbstractStockpile;
+import com.solegendary.reignofnether.building.buildings.villagers.Castle;
+import com.solegendary.reignofnether.building.buildings.villagers.Watchtower;
 import com.solegendary.reignofnether.fogofwar.*;
 import com.solegendary.reignofnether.hud.AbilityButton;
 import com.solegendary.reignofnether.hud.Button;
 import com.solegendary.reignofnether.player.PlayerServerEvents;
+import com.solegendary.reignofnether.registrars.BlockRegistrar;
 import com.solegendary.reignofnether.registrars.EntityRegistrar;
 import com.solegendary.reignofnether.research.ResearchServerEvents;
 import com.solegendary.reignofnether.research.researchItems.ResearchAdvancedPortals;
@@ -27,6 +32,8 @@ import com.solegendary.reignofnether.unit.goals.BuildRepairGoal;
 import com.solegendary.reignofnether.unit.interfaces.Unit;
 import com.solegendary.reignofnether.unit.interfaces.WorkerUnit;
 import com.solegendary.reignofnether.unit.units.monsters.SilverfishUnit;
+import com.solegendary.reignofnether.unit.units.villagers.VillagerUnit;
+import com.solegendary.reignofnether.unit.units.villagers.VillagerUnitProfession;
 import com.solegendary.reignofnether.util.Faction;
 import com.solegendary.reignofnether.util.MiscUtil;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -39,6 +46,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.level.Explosion;
@@ -61,6 +69,7 @@ import static com.solegendary.reignofnether.building.BuildingUtils.getMaxCorner;
 import static com.solegendary.reignofnether.building.BuildingUtils.getMinCorner;
 import static com.solegendary.reignofnether.player.PlayerServerEvents.isRTSPlayer;
 import static com.solegendary.reignofnether.player.PlayerServerEvents.sendMessageToAllPlayers;
+import static com.solegendary.reignofnether.survival.SurvivalServerEvents.ENEMY_OWNER_NAME;
 
 public abstract class Building {
 
@@ -127,6 +136,8 @@ public abstract class Building {
 
     public boolean isDiagonalBridge = false;
 
+    public boolean selfBuilding = false; // if set to true, will build itself quickly without workers (but not repair)
+
     // blocks types that are placed automatically when the building is placed
     // used to control size of initial foundations while keeping it symmetrical
     public final ArrayList<Block> startingBlockTypes = new ArrayList<>();
@@ -152,6 +163,10 @@ public abstract class Building {
 
     public void setLevel(Level level) {
         this.level = level;
+    }
+
+    public String getUpgradedName() {
+        return name;
     }
 
     public Building(
@@ -187,9 +202,9 @@ public abstract class Building {
 
         // re-hide players if they were revealed
         if (this.isCapitol && !this.level.isClientSide()) {
-            if (BuildingUtils.getTotalCompletedBuildingsOwned(false, this.ownerName) == 1
-                && !TutorialServerEvents.isEnabled()) {
-                sendMessageToAllPlayers(I18n.get("hud.reignofnether.placed_capitol", this.ownerName));
+            if (BuildingUtils.getTotalCompletedBuildingsOwned(false, this.ownerName) == 1 &&
+                !TutorialServerEvents.isEnabled() && FogOfWarServerEvents.isEnabled()) {
+                sendMessageToAllPlayers("hud.reignofnether.placed_capitol", false, this.ownerName);
             }
             FogOfWarClientboundPacket.revealOrHidePlayer(false, this.ownerName);
         }
@@ -248,7 +263,12 @@ public abstract class Building {
         return null;
     }
 
+
     public boolean canAfford(String ownerName) {
+        if (SurvivalServerEvents.isEnabled() &&
+            SurvivalServerEvents.ENEMY_OWNER_NAME.equals(ownerName))
+            return true;
+
         for (Resources resources : ResourcesServerEvents.resourcesList)
             if (resources.ownerName.equals(ownerName)) {
                 return (
@@ -288,9 +308,8 @@ public abstract class Building {
         for (int x = minX; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {
                 BlockPos bp = new BlockPos(x, minY, z);
-                if (!(this instanceof AbstractBridge) && isPosInsideBuilding(bp)) {
+                if (!(this instanceof AbstractBridge) && isPosInsideBuilding(bp))
                     continue;
-                }
 
                 float dist = (float) bpTarget.distToCenterSqr(bp.getX(), bp.getY(), bp.getZ());
 
@@ -353,7 +372,7 @@ public abstract class Building {
     // place blocks according to the following rules:
     // - block must be connected to something else (not air)
     // - block must be the lowest Y value possible
-    private void buildNextBlock(ServerLevel level, String builderName) {
+    public void buildNextBlock(ServerLevel level, String builderName) {
 
         // if the building is already constructed then start subtracting resources for repairs
         if (isBuilt) {
@@ -465,9 +484,6 @@ public abstract class Building {
     }
 
     public boolean shouldBeDestroyed() {
-        if (tickAge % 4 == 0) {
-            return false;
-        }
         if (!this.level.getWorldBorder().isWithinBounds(centrePos)) {
             return true;
         }
@@ -530,14 +546,17 @@ public abstract class Building {
             if (BuildingUtils.getTotalCompletedBuildingsOwned(false, this.ownerName) == 0) {
                 PlayerServerEvents.defeat(this.ownerName, Component.translatable("server.reignofnether.lost_buildings").getString());
             } else if (this.isCapitol) {
-                if (FogOfWarServerEvents.isEnabled()) {
+                int numCapitolsOwned = BuildingServerEvents.getBuildings()
+                        .stream()
+                        .filter(b -> b.ownerName.equals(this.name) && b.isCapitol)
+                        .toList()
+                        .size();
+                if (FogOfWarServerEvents.isEnabled() && numCapitolsOwned == 0) {
                     sendMessageToAllPlayers("server.reignofnether.lost_capitol",
                             false,
                             this.ownerName,
                             PlayerServerEvents.TICKS_TO_REVEAL / ResourceCost.TICKS_PER_SECOND
                     );
-                } else if (SurvivalServerEvents.isEnabled()) {
-                    PlayerServerEvents.defeat(this.ownerName, Component.translatable("server.reignofnether.lost_capitol_defeat").getString());
                 }
             }
         }
@@ -637,7 +656,7 @@ public abstract class Building {
         isBuilt = true;
         if (!this.level.isClientSide()) {
             FrozenChunkClientboundPacket.setBuildingBuiltServerside(this.originPos);
-            if (isCapitol) {
+            if (isCapitol && BuildingUtils.getTotalCompletedBuildingsOwned(false, ownerName) <= 1) {
                 for (int i = 0; i < 3; i++)
                     spawnHuntableAnimalsNearby(ANIMAL_SPAWN_BLOCK_RANGE / 2);
             }
@@ -646,11 +665,38 @@ public abstract class Building {
         }
 
         // prevent showing blocks on minimap unless previously explored
-        if (this.level.isClientSide() && !isExploredClientside) {
+        if (this.level.isClientSide() && !isExploredClientside)
             for (BuildingBlock bb : blocks)
-                if (!this.level.getBlockState(bb.getBlockPos()).isAir()) {
+                if (!this.level.getBlockState(bb.getBlockPos()).isAir())
                     this.level.setBlockAndUpdate(bb.getBlockPos(), Blocks.AIR.defaultBlockState());
+
+        if (!level.isClientSide() && ownerName.equals(ENEMY_OWNER_NAME)) {
+            if (this instanceof GarrisonableBuilding garr) {
+                int numUnits = 7;
+                if (this instanceof DarkWatchtower || this instanceof Watchtower)
+                    numUnits = 3;
+                else if (this instanceof Bastion)
+                    numUnits = 4;
+
+                for (int i = 0; i < numUnits; i++) {
+                    EntityType<? extends Mob> entityType = null;
+                    if (getFaction() == Faction.VILLAGERS)
+                        entityType = EntityRegistrar.PILLAGER_UNIT.get();
+                    else if (getFaction() == Faction.MONSTERS)
+                        entityType = EntityRegistrar.SKELETON_UNIT.get();
+                    else if (getFaction() == Faction.PIGLINS)
+                        entityType = EntityRegistrar.HEADHUNTER_UNIT.get();
+
+                    if (entityType != null) {
+                        UnitServerEvents.spawnMob(
+                                entityType,
+                                (ServerLevel) level,
+                                originPos.offset(garr.getEntryPosition()),
+                                ENEMY_OWNER_NAME
+                        );
+                    }
                 }
+            }
         }
     }
 
@@ -696,7 +742,7 @@ public abstract class Building {
         if (isBuilt) {
             tickAgeAfterBuilt += 1;
         }
-        tickAge = +1;
+        tickAge += 1;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -710,47 +756,75 @@ public abstract class Building {
         ArrayList<WorkerUnit> workerUnits = getBuilders(serverLevel);
         int builderCount = workerUnits.size();
 
+        for (WorkerUnit workerUnit : workerUnits) {
+            if (workerUnit instanceof VillagerUnit vUnit && vUnit.getUnitProfession() == VillagerUnitProfession.MASON) {
+                if (vUnit.isVeteran())
+                    builderCount += 2;
+                else
+                    builderCount += 1;
+            }
+        }
+        boolean hasFastBuildCheat = ResearchServerEvents.playerHasCheat(this.ownerName, "warpten");
+
         // place a block if the tick has run down
-        if (blocksPlaced < blocksTotal && builderCount > 0) {
-            this.ticksToExtinguish += 1;
-            if (ticksToExtinguish >= TICKS_TO_EXTINGUISH) {
-                if (!(this instanceof FlameSanctuary) && !(this instanceof Fortress)) {
-                    extinguishFires(serverLevel);
+        if (blocksPlaced < blocksTotal) {
+
+            if (builderCount > 0) {
+                this.ticksToExtinguish += 1;
+                if (ticksToExtinguish >= TICKS_TO_EXTINGUISH) {
+                    if (!(this instanceof FlameSanctuary) && !(this instanceof Fortress)) {
+                        extinguishFires(serverLevel);
+                    }
+                    ticksToExtinguish = 0;
                 }
-                ticksToExtinguish = 0;
-            }
-            // AoE 2 speed:
-            // 1 builder  - 3/3 (100%)
-            // 2 builders - 3/4 (75%)
-            // 3 builders - 3/5 (60%)
-            // 4 builders - 3/6 (50%)
-            // 5 builders - 3/7 (43%)
-            int msPerBuild = (3 * BASE_MS_PER_BUILD) / (builderCount + 2);
-            if (!isBuilt) {
-                msPerBuild *= buildTimeModifier;
-            } else {
-                msPerBuild *= repairTimeModifier;
-            }
+                // AoE 2 speed:
+                // 1 builder  - 3/3 (100%)
+                // 2 builders - 3/4 (75%)
+                // 3 builders - 3/5 (60%)
+                // 4 builders - 3/6 (50%)
+                // 5 builders - 3/7 (43%)
+                int msPerBuild = (3 * BASE_MS_PER_BUILD) / (builderCount + 2);
+                if (!isBuilt) {
+                    msPerBuild *= buildTimeModifier;
+                    if (isCapitol && BuildingUtils.getTotalCompletedBuildingsOwned(false, ownerName) > 0)
+                        msPerBuild *= 2;
+                } else {
+                    msPerBuild *= repairTimeModifier;
+                }
 
-            if (this instanceof Portal && !BuildingServerEvents.isOnNetherBlocks(blocks, originPos, serverLevel)
-                && !ResearchServerEvents.playerHasResearch(ownerName, ResearchAdvancedPortals.itemName)) {
-                msPerBuild *= Portal.NON_NETHER_BUILD_TIME_MODIFIER;
-            }
+                if (this instanceof Portal && !BuildingServerEvents.isOnNetherBlocks(blocks, originPos, serverLevel)
+                        && !ResearchServerEvents.playerHasResearch(ownerName, ResearchAdvancedPortals.itemName)) {
+                    msPerBuild *= Portal.NON_NETHER_BUILD_TIME_MODIFIER;
+                }
 
-            if (msToNextBuild > msPerBuild) {
-                msToNextBuild = msPerBuild;
-            }
+                if (msToNextBuild > msPerBuild) {
+                    msToNextBuild = msPerBuild;
+                }
 
-            if (ResearchServerEvents.playerHasCheat(this.ownerName, "warpten")) {
-                msToNextBuild -= 500;
-            } else {
-                msToNextBuild -= 50;
-            }
+                if (hasFastBuildCheat) {
+                    msToNextBuild -= 500;
+                } else {
+                    msToNextBuild -= 50;
+                }
 
-            if (msToNextBuild <= 0) {
-                msToNextBuild = msPerBuild;
-                String builderName = ((Unit) workerUnits.get(new Random().nextInt(builderCount))).getOwnerName();
-                buildNextBlock(serverLevel, builderName);
+                if (msToNextBuild <= 0) {
+                    msToNextBuild = msPerBuild;
+                    Collections.shuffle(workerUnits);
+                    if (!workerUnits.isEmpty()) {
+                        WorkerUnit wUnit = workerUnits.get(0);
+                        String ownerName = ((Unit) wUnit).getOwnerName();
+
+                        int numBuildingsOwned = BuildingServerEvents.getBuildings().stream().filter(
+                                b -> b.ownerName.equals(ownerName)
+                        ).toList().size();
+                        if (wUnit instanceof VillagerUnit vUnit && numBuildingsOwned > 1)
+                            vUnit.incrementMasonExp();
+
+                        buildNextBlock(serverLevel, ownerName);
+                    }
+                }
+            } else if ((selfBuilding || hasFastBuildCheat) && !isBuilt) {
+                buildNextBlock(serverLevel, ownerName);
             }
         } else {
             this.ticksToExtinguish = 0;
@@ -768,7 +842,8 @@ public abstract class Building {
                 if (bs.getMaterial() == Material.WATER) {
                     if (level.getBlockState(bp.below()).getBlock() == Blocks.SOUL_SAND) {
                         level.setBlockAndUpdate(bp.below(), Blocks.SOUL_SOIL.defaultBlockState());
-                    } else if (level.getBlockState(bp.below()).getBlock() == Blocks.MAGMA_BLOCK) {
+                    } else if (level.getBlockState(bp.below()).getBlock() == Blocks.MAGMA_BLOCK ||
+                               level.getBlockState(bp.below()).getBlock() == BlockRegistrar.WALKABLE_MAGMA_BLOCK.get()) {
                         level.setBlockAndUpdate(bp.below(), Blocks.COBBLESTONE.defaultBlockState());
                     }
                 }
@@ -836,16 +911,19 @@ public abstract class Building {
                 if (retries < MAX_RETRIES) {
                     spawnAttempts = 0;
                     retries += 1;
-                    range -= 25;
+                    range -= (range * 0.35f);
                 } else {
                     ReignOfNether.LOGGER.warn("Gave up trying to find a suitable animal spawn!");
                     return;
                 }
             }
-        } while (!spawnBs.getMaterial().isSolid() || spawnBs.getMaterial() == Material.LEAVES
+        } while (!spawnBs.getMaterial().isSolid()
+            || spawnBs.getMaterial() == Material.LEAVES
+            || spawnBs.getBlock() == Blocks.BARRIER
             || spawnBs.getMaterial() == Material.WOOD
             || spawnBp.distSqr(centrePos) < ANIMAL_SPAWN_RANGE_MIN * ANIMAL_SPAWN_RANGE_MIN
             || spawnBp.distSqr(centrePos) > range * range
+            || Math.abs(spawnBp.getY() - minCorner.getY()) >= 4
             || BuildingUtils.isPosInsideAnyBuilding(level.isClientSide(), spawnBp)
             || BuildingUtils.isPosInsideAnyBuilding(level.isClientSide(), spawnBp.above()));
 

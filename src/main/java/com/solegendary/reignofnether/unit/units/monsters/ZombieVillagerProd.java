@@ -1,7 +1,9 @@
 package com.solegendary.reignofnether.unit.units.monsters;
 
 import com.solegendary.reignofnether.research.ResearchClient;
-import de.n8M4.research.researchItems.*;
+import de.n8M4.research.researchItems.ResearchGraveyardProduction;
+import de.n8M4.research.researchItems.ResearchGraveyardProductionT2;
+import de.n8M4.research.researchItems.ResearchGraveyardProductionT3;
 import net.minecraft.client.resources.language.I18n;
 import com.solegendary.reignofnether.ReignOfNether;
 import com.solegendary.reignofnether.building.BuildingServerboundPacket;

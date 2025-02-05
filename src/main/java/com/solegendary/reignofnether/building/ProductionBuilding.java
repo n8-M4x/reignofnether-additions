@@ -41,7 +41,7 @@ public abstract class ProductionBuilding extends Building {
     private BlockPos rallyPoint;
     private LivingEntity rallyPointEntity;
     public boolean canSetRallyPoint = true;
-    protected float spawnRadiusOffset = -0.5f;
+    protected float spawnRadiusOffset = 1f;
 
     public ProductionBuilding(Level level, BlockPos originPos, Rotation rotation, String ownerName, ArrayList<BuildingBlock> blocks, boolean isCapitol) {
         super(level, originPos, rotation, ownerName, blocks, isCapitol);
@@ -91,16 +91,26 @@ public abstract class ProductionBuilding extends Building {
         return spawnPoint;
     }
 
-    public void produceUnit(ServerLevel level, EntityType<? extends Unit> entityType, String ownerName, boolean spawnIndoors) {
+    // start with the centre pos then go down and look at adjacent blocks until we reach a non-solid block
+    public BlockPos getDefaultOutdoorSpawnPoint() {
+        return getMinCorner(this.blocks).offset(-spawnRadiusOffset, 0, -spawnRadiusOffset);
+    }
 
+    public Entity produceUnit(ServerLevel level, EntityType<? extends Unit> entityType, String ownerName, boolean spawnIndoors) {
+
+        LivingEntity rallyEntity = getRallyPointEntity();
         BlockPos spawnPoint;
         if (spawnIndoors) {
             spawnPoint = getIndoorSpawnPoint(level);
             if (entityType == EntityRegistrar.GHAST_UNIT.get())
                 spawnPoint = spawnPoint.offset(0,5,0);
         }
+        else if (rallyPoint != null)
+            spawnPoint = getClosestGroundPos(rallyPoint, (int) spawnRadiusOffset);
+        else if (rallyPointEntity != null)
+            spawnPoint = getClosestGroundPos(rallyPointEntity.getOnPos(), (int) spawnRadiusOffset);
         else
-            spawnPoint = getMinCorner(this.blocks).offset(spawnRadiusOffset, 0, spawnRadiusOffset);
+            spawnPoint = getDefaultOutdoorSpawnPoint();
 
         Entity entity = entityType.spawn(level, null,
                 null,
@@ -109,10 +119,7 @@ public abstract class ProductionBuilding extends Building {
                 true,
                 false
         );
-        BlockPos defaultRallyPoint = getMinCorner(this.blocks).offset(
-                spawnRadiusOffset,
-                0.5f,
-                spawnRadiusOffset);
+        BlockPos defaultRallyPoint = getDefaultOutdoorSpawnPoint();
 
         BlockPos rallyPoint = this.rallyPoint == null ? defaultRallyPoint : this.rallyPoint;
 
@@ -120,7 +127,6 @@ public abstract class ProductionBuilding extends Building {
             unit.setOwnerName(ownerName);
             unit.setupEquipmentAndUpgradesServer();
 
-            LivingEntity rallyEntity = getRallyPointEntity();
             if (rallyEntity != null) {
                 if (ResourceSources.isHuntableAnimal(rallyEntity)) {
                     CompletableFuture.delayedExecutor(500, TimeUnit.MILLISECONDS).execute(() -> {
@@ -158,6 +164,7 @@ public abstract class ProductionBuilding extends Building {
                 });
             }
         }
+        return entity;
     }
 
     // return true if successful
@@ -182,6 +189,7 @@ public abstract class ProductionBuilding extends Building {
                 case IronGolemProd.itemName -> prodItem = new IronGolemProd(building);
                 case WitchProd.itemName -> prodItem = new WitchProd(building);
                 case EvokerProd.itemName -> prodItem = new EvokerProd(building);
+                case SlimeProd.itemName -> prodItem = new SlimeProd(building);
                 case WardenProd.itemName -> prodItem = new WardenProd(building);
                 case RavagerProd.itemName -> prodItem = new RavagerProd(building);
 
@@ -191,6 +199,7 @@ public abstract class ProductionBuilding extends Building {
                 case HoglinProd.itemName -> prodItem = new HoglinProd(building);
                 case BlazeProd.itemName -> prodItem = new BlazeProd(building);
                 case WitherSkeletonProd.itemName -> prodItem = new WitherSkeletonProd(building);
+                case MagmaCubeProd.itemName -> prodItem = new MagmaCubeProd(building);
                 case GhastProd.itemName -> prodItem = new GhastProd(building);
 
                 case ResearchVindicatorAxes.itemName -> prodItem = new ResearchVindicatorAxes(building);
@@ -202,6 +211,7 @@ public abstract class ProductionBuilding extends Building {
                 case ResearchHusks.itemName -> prodItem = new ResearchHusks(building);
                 case ResearchDrowned.itemName -> prodItem = new ResearchDrowned(building);
                 case ResearchStrays.itemName -> prodItem = new ResearchStrays(building);
+                case ResearchSlimeConversion.itemName -> prodItem = new ResearchSlimeConversion(building);
                 case ResearchLingeringPotions.itemName -> prodItem = new ResearchLingeringPotions(building);
                 case ResearchEvokerVexes.itemName -> prodItem = new ResearchEvokerVexes(building);
                 case ResearchGolemSmithing.itemName -> prodItem = new ResearchGolemSmithing(building);
@@ -229,6 +239,8 @@ public abstract class ProductionBuilding extends Building {
                 case ResearchGrandLibrary.itemName -> prodItem = new ResearchGrandLibrary(building);
                 case ResearchSpiderWebs.itemName -> prodItem = new ResearchSpiderWebs(building);
                 case ResearchBloodlust.itemName -> prodItem = new ResearchBloodlust(building);
+                case ResearchCubeMagma.itemName -> prodItem = new ResearchCubeMagma(building);
+                case ResearchSoulFireballs.itemName -> prodItem = new ResearchSoulFireballs(building);
 
                 case ResearchPortalForCivilian.itemName -> prodItem = new ResearchPortalForCivilian(building);
                 case ResearchPortalForMilitary.itemName -> prodItem = new ResearchPortalForMilitary(building);
@@ -317,8 +329,15 @@ public abstract class ProductionBuilding extends Building {
 
         if (productionQueue.size() >= 1) {
             ProductionItem nextItem = productionQueue.get(0);
-            if (nextItem.tick(tickLevel))
-                productionQueue.remove(0);
+            if (nextItem.tick(tickLevel)) {
+                if (!tickLevel.isClientSide()) {
+                    productionQueue.remove(0);
+                    if (productionQueue.isEmpty())
+                        BuildingClientboundPacket.clearQueue(this.originPos);
+                    else
+                        BuildingClientboundPacket.completeProduction(this.originPos);
+                }
+            }
         }
     }
 }

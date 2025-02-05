@@ -8,6 +8,7 @@ import com.solegendary.reignofnether.keybinds.Keybindings;
 import com.solegendary.reignofnether.research.ResearchServerEvents;
 import com.solegendary.reignofnether.research.researchItems.ResearchBruteShields;
 import com.solegendary.reignofnether.resources.ResourceCosts;
+import com.solegendary.reignofnether.unit.Checkpoint;
 import com.solegendary.reignofnether.unit.UnitClientEvents;
 import com.solegendary.reignofnether.unit.goals.*;
 import com.solegendary.reignofnether.unit.interfaces.AttackerUnit;
@@ -17,7 +18,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -32,7 +32,6 @@ import net.minecraft.world.entity.monster.piglin.PiglinBrute;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -41,17 +40,8 @@ import java.util.UUID;
 
 public class BruteUnit extends PiglinBrute implements Unit, AttackerUnit {
     // region
-    private final ArrayList<BlockPos> checkpoints = new ArrayList<>();
-    private int checkpointTicksLeft = UnitClientEvents.CHECKPOINT_TICKS_MAX;
-    public ArrayList<BlockPos> getCheckpoints() { return checkpoints; };
-    public int getCheckpointTicksLeft() { return checkpointTicksLeft; }
-    public void setCheckpointTicksLeft(int ticks) { checkpointTicksLeft = ticks; }
-    private boolean isCheckpointGreen = true;
-    public boolean isCheckpointGreen() { return isCheckpointGreen; };
-    public void setIsCheckpointGreen(boolean green) { isCheckpointGreen = green; };
-    private int entityCheckpointId = -1;
-    public int getEntityCheckpointId() { return entityCheckpointId; };
-    public void setEntityCheckpointId(int id) { entityCheckpointId = id; };
+    private final ArrayList<Checkpoint> checkpoints = new ArrayList<>();
+    public ArrayList<Checkpoint> getCheckpoints() { return checkpoints; };
 
     GarrisonGoal garrisonGoal;
     public GarrisonGoal getGarrisonGoal() { return garrisonGoal; }
@@ -102,7 +92,8 @@ public class BruteUnit extends PiglinBrute implements Unit, AttackerUnit {
     public float getMovementSpeed() {return isHoldingUpShield ? movementSpeed * SHIELD_MOVE_MULTIPLIER : movementSpeed;}
     public float getUnitMaxHealth() {return maxHealth;}
     public float getUnitArmorValue() {return armorValue;}
-    public int getPopCost() {return popCost;}
+    @Nullable
+    public int getPopCost() {return ResourceCosts.BRUTE.population;}
     public boolean getWillRetaliate() {return willRetaliate;}
     public float getAttacksPerSecond() {
         if (bloodlustTicks > 0)
@@ -141,7 +132,6 @@ public class BruteUnit extends PiglinBrute implements Unit, AttackerUnit {
     final static public float maxHealth = 50.0f;
     final static public float armorValue = 0.0f;
     final static public float movementSpeed = 0.28f;
-    final static public int popCost = ResourceCosts.BRUTE.population;
     public int maxResources = 100;
 
     public int bloodlustTicks = 0;
@@ -178,6 +168,7 @@ public class BruteUnit extends PiglinBrute implements Unit, AttackerUnit {
                 .add(Attributes.ATTACK_DAMAGE, BruteUnit.attackDamage)
                 .add(Attributes.MOVEMENT_SPEED, BruteUnit.movementSpeed)
                 .add(Attributes.MAX_HEALTH, BruteUnit.maxHealth)
+                .add(Attributes.FOLLOW_RANGE, Unit.getFollowRange())
                 .add(Attributes.ARMOR, BruteUnit.armorValue);
     }
 
@@ -235,7 +226,7 @@ public class BruteUnit extends PiglinBrute implements Unit, AttackerUnit {
 
     @Override
     public void setupEquipmentAndUpgradesServer() {
-        ItemStack axeStack = new ItemStack(Items.IRON_SWORD);
+        ItemStack axeStack = new ItemStack(Items.GOLDEN_SWORD);
         AttributeModifier mod = new AttributeModifier(UUID.randomUUID().toString(), 0, AttributeModifier.Operation.ADDITION);
         axeStack.addAttributeModifier(Attributes.ATTACK_DAMAGE, mod, EquipmentSlot.MAINHAND);
         this.setItemSlot(EquipmentSlot.MAINHAND, axeStack);

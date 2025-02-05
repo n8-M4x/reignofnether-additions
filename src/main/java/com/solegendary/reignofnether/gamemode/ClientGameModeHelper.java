@@ -2,8 +2,10 @@ package com.solegendary.reignofnether.gamemode;
 
 import com.solegendary.reignofnether.hud.Button;
 import com.solegendary.reignofnether.keybinds.Keybinding;
+import com.solegendary.reignofnether.player.PlayerServerboundPacket;
 import com.solegendary.reignofnether.survival.SurvivalClientEvents;
 import com.solegendary.reignofnether.survival.WaveDifficulty;
+import com.solegendary.reignofnether.util.Faction;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
@@ -13,7 +15,8 @@ import java.util.List;
 
 public class ClientGameModeHelper {
 
-    public static GameMode gameMode = GameMode.STANDARD;
+    public static GameMode DEFAULT_GAMEMODE = GameMode.CLASSIC;
+    public static GameMode gameMode = DEFAULT_GAMEMODE;
     public static boolean gameModeLocked = false; // locked with startRTS() in any gamemode, unlocked with /rts-reset
     public static boolean disallowSurvival = false;
 
@@ -21,21 +24,24 @@ public class ClientGameModeHelper {
         if (gameModeLocked)
             return;
         switch (gameMode) {
-            case STANDARD -> {
+            case CLASSIC -> {
                 if (!disallowSurvival)
                     gameMode = GameMode.SURVIVAL;
+                else
+                    gameMode = GameMode.SANDBOX;
             }
-            case SURVIVAL -> gameMode = GameMode.STANDARD;
-            default -> gameMode = GameMode.STANDARD;
+            case SURVIVAL -> gameMode = GameMode.SANDBOX;
+            default -> gameMode = GameMode.CLASSIC;
         }
     }
 
     public static void cycleWaveDifficulty() {
         switch (SurvivalClientEvents.difficulty) {
+            case BEGINNER -> SurvivalClientEvents.difficulty = WaveDifficulty.EASY;
             case EASY -> SurvivalClientEvents.difficulty = WaveDifficulty.MEDIUM;
             case MEDIUM -> SurvivalClientEvents.difficulty = WaveDifficulty.HARD;
             case HARD -> SurvivalClientEvents.difficulty = WaveDifficulty.EXTREME;
-            case EXTREME -> SurvivalClientEvents.difficulty = WaveDifficulty.EASY;
+            case EXTREME -> SurvivalClientEvents.difficulty = WaveDifficulty.BEGINNER;
         }
     }
 
@@ -47,8 +53,8 @@ public class ClientGameModeHelper {
     // left click provides functionality specific to the gamemode, eg. changing wave survival difficulty
     public static Button getButton() {
         Button button = switch (gameMode) {
-            case STANDARD -> new Button(
-                    "Standard",
+            case CLASSIC -> new Button(
+                    "Classic",
                     Button.itemIconSize,
                     new ResourceLocation("minecraft", "textures/block/grass_block_side.png"),
                     (Keybinding) null,
@@ -58,11 +64,11 @@ public class ClientGameModeHelper {
                     null,
                     ClientGameModeHelper::cycleGameMode,
                     List.of(
-                            FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.standard1") +
+                            FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.classic1") +
                                     getLockedString(), Style.EMPTY.withBold(true)),
                             FormattedCharSequence.forward("", Style.EMPTY),
-                            FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.standard2"), Style.EMPTY),
-                            FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.standard3"), Style.EMPTY),
+                            FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.classic2"), Style.EMPTY),
+                            FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.classic3"), Style.EMPTY),
                             FormattedCharSequence.forward("", Style.EMPTY),
                             FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.changemode"), Style.EMPTY)
                     )
@@ -71,7 +77,8 @@ public class ClientGameModeHelper {
                     "Survival",
                     Button.itemIconSize,
                     switch (SurvivalClientEvents.difficulty) {
-                        case EASY -> new ResourceLocation("minecraft", "textures/item/wooden_sword.png");
+                        case BEGINNER -> new ResourceLocation("minecraft", "textures/item/wooden_sword.png");
+                        case EASY -> new ResourceLocation("minecraft", "textures/item/stone_sword.png");
                         case MEDIUM -> new ResourceLocation("minecraft", "textures/item/iron_sword.png");
                         case HARD -> new ResourceLocation("minecraft", "textures/item/diamond_sword.png");
                         case EXTREME -> new ResourceLocation("minecraft", "textures/item/netherite_sword.png");
@@ -95,31 +102,32 @@ public class ClientGameModeHelper {
                             FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.changemode"), Style.EMPTY)
                     )
             );
-            case KOTH -> new Button(
-                    "King of the Beacon",
+            case SANDBOX -> new Button(
+                    "Sandbox",
                     Button.itemIconSize,
-                    new ResourceLocation("minecraft", "textures/item/nether_star.png"),
+                    new ResourceLocation("minecraft", "textures/block/crafting_table_front.png"),
                     (Keybinding) null,
                     () -> false,
                     () -> false,
                     () -> !gameModeLocked,
-                    () -> {},
+                    () -> PlayerServerboundPacket.startRTS(Faction.NONE, 0d,0d,0d),
                     ClientGameModeHelper::cycleGameMode,
                     List.of(
-                            FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.koth1") +
+                            FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.sandbox1") +
                                     getLockedString(), Style.EMPTY.withBold(true)),
                             FormattedCharSequence.forward("", Style.EMPTY),
-                            FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.koth2"), Style.EMPTY),
-                            FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.koth3"), Style.EMPTY),
+                            FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.sandbox2"), Style.EMPTY),
+                            FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.sandbox3"), Style.EMPTY),
+                            FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.sandbox4"), Style.EMPTY),
                             FormattedCharSequence.forward("", Style.EMPTY),
-                            FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.koth4"), Style.EMPTY),
+                            FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.sandbox_confirm"), Style.EMPTY),
                             FormattedCharSequence.forward(I18n.get("hud.gamemode.reignofnether.changemode"), Style.EMPTY)
                     )
             );
             default -> null;
         };
         if (button != null)
-            button.tooltipOffsetY = 45;
+            button.tooltipOffsetY = 15;
         return button;
     }
 }

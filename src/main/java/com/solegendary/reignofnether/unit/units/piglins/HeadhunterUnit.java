@@ -6,7 +6,10 @@ import com.solegendary.reignofnether.ability.abilities.MountHoglin;
 import com.solegendary.reignofnether.fogofwar.FogOfWarClientboundPacket;
 import com.solegendary.reignofnether.hud.AbilityButton;
 import com.solegendary.reignofnether.keybinds.Keybindings;
+import com.solegendary.reignofnether.research.ResearchServerEvents;
+import com.solegendary.reignofnether.research.researchItems.ResearchHeavyTridents;
 import com.solegendary.reignofnether.resources.ResourceCosts;
+import com.solegendary.reignofnether.unit.Checkpoint;
 import com.solegendary.reignofnether.unit.UnitClientEvents;
 import com.solegendary.reignofnether.unit.goals.*;
 import com.solegendary.reignofnether.unit.interfaces.AttackerUnit;
@@ -32,6 +35,7 @@ import net.minecraft.world.entity.monster.piglin.PiglinBrute;
 import net.minecraft.world.entity.projectile.ThrownTrident;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
@@ -41,17 +45,8 @@ import java.util.UUID;
 
 public class HeadhunterUnit extends PiglinBrute implements Unit, AttackerUnit, RangedAttackerUnit {
     // region
-    private final ArrayList<BlockPos> checkpoints = new ArrayList<>();
-    private int checkpointTicksLeft = UnitClientEvents.CHECKPOINT_TICKS_MAX;
-    public ArrayList<BlockPos> getCheckpoints() { return checkpoints; };
-    public int getCheckpointTicksLeft() { return checkpointTicksLeft; }
-    public void setCheckpointTicksLeft(int ticks) { checkpointTicksLeft = ticks; }
-    private boolean isCheckpointGreen = true;
-    public boolean isCheckpointGreen() { return isCheckpointGreen; };
-    public void setIsCheckpointGreen(boolean green) { isCheckpointGreen = green; };
-    private int entityCheckpointId = -1;
-    public int getEntityCheckpointId() { return entityCheckpointId; };
-    public void setEntityCheckpointId(int id) { entityCheckpointId = id; };
+    private final ArrayList<Checkpoint> checkpoints = new ArrayList<>();
+    public ArrayList<Checkpoint> getCheckpoints() { return checkpoints; };
 
     GarrisonGoal garrisonGoal;
     public GarrisonGoal getGarrisonGoal() { return garrisonGoal; }
@@ -102,7 +97,8 @@ public class HeadhunterUnit extends PiglinBrute implements Unit, AttackerUnit, R
     public float getMovementSpeed() {return movementSpeed;}
     public float getUnitMaxHealth() {return maxHealth;}
     public float getUnitArmorValue() {return armorValue;}
-    public int getPopCost() {return popCost;}
+    @Nullable
+    public int getPopCost() {return ResourceCosts.HEADHUNTER.population;}
     public boolean getWillRetaliate() {return willRetaliate;}
     public float getAttacksPerSecond() {
         if (bloodlustTicks > 0)
@@ -142,7 +138,6 @@ public class HeadhunterUnit extends PiglinBrute implements Unit, AttackerUnit, R
     final static public float maxHealth = 40.0f;
     final static public float armorValue = 0.0f;
     final static public float movementSpeed = 0.25f;
-    final static public int popCost = ResourceCosts.HEADHUNTER.population;
     public int maxResources = 100;
 
     public int bloodlustTicks = 0;
@@ -181,6 +176,7 @@ public class HeadhunterUnit extends PiglinBrute implements Unit, AttackerUnit, R
                 .add(Attributes.ATTACK_DAMAGE, HeadhunterUnit.attackDamage)
                 .add(Attributes.MOVEMENT_SPEED, HeadhunterUnit.movementSpeed)
                 .add(Attributes.MAX_HEALTH, HeadhunterUnit.maxHealth)
+                .add(Attributes.FOLLOW_RANGE, Unit.getFollowRange())
                 .add(Attributes.ARMOR, HeadhunterUnit.armorValue);
     }
 
@@ -264,9 +260,13 @@ public class HeadhunterUnit extends PiglinBrute implements Unit, AttackerUnit, R
 
     @Override
     public void setupEquipmentAndUpgradesServer() {
-        ItemStack axeStack = new ItemStack(Items.TRIDENT);
+        ItemStack tridentStack = new ItemStack(Items.TRIDENT);
         AttributeModifier mod = new AttributeModifier(UUID.randomUUID().toString(), 0, AttributeModifier.Operation.ADDITION);
-        axeStack.addAttributeModifier(Attributes.ATTACK_DAMAGE, mod, EquipmentSlot.MAINHAND);
-        this.setItemSlot(EquipmentSlot.MAINHAND, axeStack);
+        tridentStack.addAttributeModifier(Attributes.ATTACK_DAMAGE, mod, EquipmentSlot.MAINHAND);
+
+        if (ResearchServerEvents.playerHasResearch(getOwnerName(), ResearchHeavyTridents.itemName))
+            tridentStack.enchant(Enchantments.UNBREAKING, 1);
+
+        this.setItemSlot(EquipmentSlot.MAINHAND, tridentStack);
     }
 }

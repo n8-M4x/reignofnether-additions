@@ -1,4 +1,8 @@
 
+
+
+
+
 Features
 --------
 
@@ -22,50 +26,68 @@ Features
         - Healing fountain
         - Mini beacon
 
+[❌] Piglin mines
+    - Static defense for piglins, but can also be used to siege
+    - When built, can be exploded manaully (or set to autoexplode on nearby enemies approaching)
+    - Explodes into combination of soulsand and magma
+
+[❌] Shift queueing actions
+
+[❌] Wave Survival: Groups of buildings on some nights
+    [❌] Add to a new class like WavePortal
+    [❌] Scale according to wave tier
+        Tier 1: cannot spawn
+        Tier 2: production building + ground units + 1 garrison
+        Tier 3: production building + ground units
+        Tier 4: production building + ground units + 2 garrisons
+        Tier 5: castle building
+        Tier 6: castle building + 2 garrisons
+
+    [❌] Instead of replacing a wave, spawn alongside a wave, but reduce the wave size
+    [❌] If left until the next night, raises the population value by the same amount that it reduced it by
+
+
+
 Bugfixes
 --------
 
-[❌] With high lag, units waiting to be queued at 99% become uncancellable
-    - https://discord.com/channels/1294953087567663135/1306165740730322986
+[❌] Workers on a building that is still auto-building the foundation layer actually slows down building
+
+[❌] Fixed a bug where teams would randomly switch
 
 [❌] Central portals sometimes do not ignite (and this somehow makes grunts spawn underground)
 
-[❌] Must restart client when switching languages for it to take effect
+[❌] Cobwebs in a spider lair should not slow down anything
 
-[❌] Tall grass and barrier blocks are now ignored by the cursor
+[❌] Dying in survival puts you in a bugged survival mode
 
+[❌] Villagers with professions don't use the correct texture for their arms, esp. farmers
+
+[❌] Have too-fast mod be built-in
+
+[❌] Don't kick players for sending too many packets if they drag-move the map
 
 
 Quality of Life Features
 ------------------------
 
-[❌] Limit ghast heights?
+[❌] Added /gamerule for bridges over void
 
-[❌] Shift queueing movements and buildings (not just placement)
-    - Add index to sendCommand packets
-    - Add recursive field to UnitActionItem: nextActionItem
-    - Add end detections in goals for when to move to nextActionItem
-    - Add clientside checkpoints
+[❌] Save transport portal links between server restarts
 
 [❌] Flatten terrain ability
     - Require that villagers work on it like a building
     - Will need a new flatten zone object (no need to save it)
 
-[❌] Amethyst is now mineable, and regenerates automatically after 1min
+[❌] Cast spells with the closest unit first
 
-[❌] Getters and Setters for unit stats
+[❌] restore ores on /rts-reset
+    - Have to track each ore block when it is mined or converted into nether terrain
 
+[❌] Special block to allow spawn location picking
 
 
 Balancing
 ---------
 
-[❌] Solution to discourage rushing
-    - villagers are most vulnerable due to their lategame nature
-    - copy the wc3 ability of turning villagers into temporary militia?
-        - give them a helmet and stone sword upgrade for +2 damage
-        - turn back on isPushable
-
-[❌] Implement damage dropoffs to buildings for charged creepers
-    - and provide a radius indicator for them when hovering over explode
-
+[❌] Soulfires created by blazes need to be made temporary

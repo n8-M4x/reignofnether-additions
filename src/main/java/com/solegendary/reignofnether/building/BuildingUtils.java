@@ -5,7 +5,6 @@ package com.solegendary.reignofnether.building;
 import com.solegendary.reignofnether.building.buildings.monsters.*;
 import com.solegendary.reignofnether.building.buildings.piglins.*;
 import com.solegendary.reignofnether.building.buildings.piglins.BlackstoneBridge;
-import com.solegendary.reignofnether.building.buildings.monsters.SpruceBridge;
 import com.solegendary.reignofnether.building.buildings.villagers.OakStockpile;
 import com.solegendary.reignofnether.building.buildings.villagers.OakBridge;
 import com.solegendary.reignofnether.building.buildings.villagers.*;
@@ -48,14 +47,6 @@ public class BuildingUtils {
         else
             return BuildingServerEvents.getBuildings().stream().map(b -> b.originPos).toList().contains(building.originPos) &&
                     building.getBlocksPlaced() < building.getBlocksTotal();
-    }
-
-    public static boolean doesPlayerOwnCapitol(boolean isClientSide, String playerName) {
-        List<Building> buildings = isClientSide ? BuildingClientEvents.getBuildings() : BuildingServerEvents.getBuildings();
-        for (Building building : buildings)
-            if (building.isCapitol && building.ownerName.equals(playerName))
-                return true;
-        return false;
     }
 
     // returns a list of BPs that may reside in unique chunks for fog of war calcs
@@ -120,6 +111,7 @@ public class BuildingUtils {
             case Mausoleum.buildingName -> building = new Mausoleum(level, pos, rotation, ownerName);
             case SculkCatalyst.buildingName -> building = new SculkCatalyst(level, pos, rotation, ownerName);
             case SpiderLair.buildingName -> building = new SpiderLair(level, pos, rotation, ownerName);
+            case SlimePit.buildingName -> building = new SlimePit(level, pos, rotation, ownerName);
             case ArcaneTower.buildingName -> building = new ArcaneTower(level, pos, rotation, ownerName);
             case Library.buildingName -> building = new Library(level, pos, rotation, ownerName);
             case Dungeon.buildingName -> building = new Dungeon(level, pos, rotation, ownerName);
@@ -137,6 +129,7 @@ public class BuildingUtils {
             case HoglinStables.buildingName -> building = new HoglinStables(level, pos, rotation, ownerName);
             case FlameSanctuary.buildingName -> building = new FlameSanctuary(level, pos, rotation, ownerName);
             case WitherShrine.buildingName -> building = new WitherShrine(level, pos, rotation, ownerName);
+            case BasaltSprings.buildingName -> building = new BasaltSprings(level, pos, rotation, ownerName);
             case Fortress.buildingName -> building = new Fortress(level, pos, rotation, ownerName);
         }
         if (building != null)

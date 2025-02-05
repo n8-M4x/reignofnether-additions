@@ -3,6 +3,7 @@ package com.solegendary.reignofnether.unit.units.monsters;
 import com.solegendary.reignofnether.ability.Ability;
 import com.solegendary.reignofnether.hud.AbilityButton;
 import com.solegendary.reignofnether.resources.ResourceCosts;
+import com.solegendary.reignofnether.unit.Checkpoint;
 import com.solegendary.reignofnether.unit.UnitClientEvents;
 import com.solegendary.reignofnether.unit.goals.*;
 import com.solegendary.reignofnether.unit.interfaces.AttackerUnit;
@@ -28,7 +29,6 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -36,17 +36,8 @@ import java.util.List;
 
 public class HuskUnit extends Husk implements Unit, AttackerUnit {
     // region
-    private final ArrayList<BlockPos> checkpoints = new ArrayList<>();
-    private int checkpointTicksLeft = UnitClientEvents.CHECKPOINT_TICKS_MAX;
-    public ArrayList<BlockPos> getCheckpoints() { return checkpoints; };
-    public int getCheckpointTicksLeft() { return checkpointTicksLeft; }
-    public void setCheckpointTicksLeft(int ticks) { checkpointTicksLeft = ticks; }
-    private boolean isCheckpointGreen = true;
-    public boolean isCheckpointGreen() { return isCheckpointGreen; };
-    public void setIsCheckpointGreen(boolean green) { isCheckpointGreen = green; };
-    private int entityCheckpointId = -1;
-    public int getEntityCheckpointId() { return entityCheckpointId; };
-    public void setEntityCheckpointId(int id) { entityCheckpointId = id; };
+    private final ArrayList<Checkpoint> checkpoints = new ArrayList<>();
+    public ArrayList<Checkpoint> getCheckpoints() { return checkpoints; };
 
     GarrisonGoal garrisonGoal;
     public GarrisonGoal getGarrisonGoal() { return garrisonGoal; }
@@ -84,7 +75,9 @@ public class HuskUnit extends Husk implements Unit, AttackerUnit {
 
     // which player owns this unit? this format ensures its synched to client without having to use packets
     public String getOwnerName() { return this.entityData.get(ownerDataAccessor); }
-    public void setOwnerName(String name) { this.entityData.set(ownerDataAccessor, name); }
+    public void setOwnerName(String name) {
+        this.entityData.set(ownerDataAccessor, name);
+    }
     public static final EntityDataAccessor<String> ownerDataAccessor =
             SynchedEntityData.defineId(HuskUnit.class, EntityDataSerializers.STRING);
 
@@ -105,7 +98,8 @@ public class HuskUnit extends Husk implements Unit, AttackerUnit {
     public float getUnitAttackDamage() {return attackDamage;}
     public float getUnitMaxHealth() {return maxHealth;}
     public float getUnitArmorValue() {return armorValue;}
-    public int getPopCost() {return popCost;}
+    @Nullable
+    public int getPopCost() {return ResourceCosts.HUSK.population;}
     public boolean canAttackBuildings() {return getAttackBuildingGoal() != null;}
 
     public void setAttackMoveTarget(@Nullable BlockPos bp) { this.attackMoveTarget = bp; }
@@ -122,7 +116,6 @@ public class HuskUnit extends Husk implements Unit, AttackerUnit {
     final static public float aggroRange = 10;
     final static public boolean willRetaliate = true; // will attack when hurt by an enemy
     final static public boolean aggressiveWhenIdle = true;
-    final static public int popCost = ResourceCosts.HUSK.population;
 
     public int maxResources = 100;
 
@@ -146,6 +139,7 @@ public class HuskUnit extends Husk implements Unit, AttackerUnit {
                 .add(Attributes.ATTACK_DAMAGE, HuskUnit.attackDamage)
                 .add(Attributes.ARMOR, HuskUnit.armorValue)
                 .add(Attributes.MAX_HEALTH, HuskUnit.maxHealth)
+                .add(Attributes.FOLLOW_RANGE, Unit.getFollowRange())
                 .add(Attributes.SPAWN_REINFORCEMENTS_CHANCE, 0); // needs to be added for parent to work
     }
 

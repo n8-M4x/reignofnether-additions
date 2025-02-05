@@ -7,6 +7,7 @@ import com.solegendary.reignofnether.ability.EnchantAbilityServerboundPacket;
 import com.solegendary.reignofnether.attackwarnings.AttackWarningClientboundPacket;
 import com.solegendary.reignofnether.building.BuildingClientboundPacket;
 import com.solegendary.reignofnether.building.BuildingServerboundPacket;
+import com.solegendary.reignofnether.config.ClientboundSyncResourceCostPacket;
 import com.solegendary.reignofnether.fogofwar.FogOfWarServerboundPacket;
 import com.solegendary.reignofnether.fogofwar.FrozenChunkClientboundPacket;
 import com.solegendary.reignofnether.fogofwar.FrozenChunkServerboundPacket;
@@ -17,6 +18,7 @@ import com.solegendary.reignofnether.fogofwar.FogOfWarClientboundPacket;
 import com.solegendary.reignofnether.player.PlayerClientboundPacket;
 import com.solegendary.reignofnether.player.PlayerServerboundPacket;
 import com.solegendary.reignofnether.research.ResearchClientboundPacket;
+import com.solegendary.reignofnether.research.ResearchServerboundPacket;
 import com.solegendary.reignofnether.resources.ResourcesClientboundPacket;
 import com.solegendary.reignofnether.sounds.SoundClientboundPacket;
 import com.solegendary.reignofnether.survival.SurvivalClientboundPacket;
@@ -73,6 +75,10 @@ public final class PacketHandler {
                 .encoder(UnitSyncWorkerClientBoundPacket::encode).decoder(UnitSyncWorkerClientBoundPacket::new)
                 .consumer(UnitSyncWorkerClientBoundPacket::handle).add();
 
+        INSTANCE.messageBuilder(UnitAnimationClientboundPacket.class, index++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(UnitAnimationClientboundPacket::encode).decoder(UnitAnimationClientboundPacket::new)
+                .consumer(UnitAnimationClientboundPacket::handle).add();
+
         INSTANCE.messageBuilder(UnitIdleWorkerClientBoundPacket.class, index++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(UnitIdleWorkerClientBoundPacket::encode).decoder(UnitIdleWorkerClientBoundPacket::new)
                 .consumer(UnitIdleWorkerClientBoundPacket::handle).add();
@@ -80,6 +86,10 @@ public final class PacketHandler {
         INSTANCE.messageBuilder(ResearchClientboundPacket.class, index++, NetworkDirection.PLAY_TO_CLIENT)
                 .encoder(ResearchClientboundPacket::encode).decoder(ResearchClientboundPacket::new)
                 .consumer(ResearchClientboundPacket::handle).add();
+
+        INSTANCE.messageBuilder(ResearchServerboundPacket.class, index++, NetworkDirection.PLAY_TO_SERVER)
+                .encoder(ResearchServerboundPacket::encode).decoder(ResearchServerboundPacket::new)
+                .consumer(ResearchServerboundPacket::handle).add();
 
         INSTANCE.messageBuilder(PlayerServerboundPacket.class, index++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(PlayerServerboundPacket::encode).decoder(PlayerServerboundPacket::new)
@@ -197,6 +207,12 @@ public final class PacketHandler {
                 .encoder(ClientboundOpenVotenScreenPacket::encode)
                 .decoder(ClientboundOpenVotenScreenPacket::decode)
                 .consumer(ClientboundOpenVotenScreenPacket::handle)
+                .add();
+
+        INSTANCE.messageBuilder(ClientboundSyncResourceCostPacket.class, index++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(ClientboundSyncResourceCostPacket::encode)
+                .decoder(ClientboundSyncResourceCostPacket::decode)
+                .consumer(ClientboundSyncResourceCostPacket::handle)
                 .add();
     }
 }

@@ -37,6 +37,10 @@ public class PlayerClientEvents {
 
     public static boolean canStartRTS = true;
 
+    public static boolean isSandbox() {
+        return isRTSPlayer && ClientGameModeHelper.gameMode == GameMode.SANDBOX;
+    }
+
     @SubscribeEvent
     public static void onRegisterCommand(RegisterClientCommandsEvent evt) {
 
@@ -95,6 +99,11 @@ public class PlayerClientEvents {
                 MC.player.sendSystemMessage(Component.translatable("commands.reignofnether.gamerule.do_log_falling", "/gamerule doLogFalling"));
                 MC.player.sendSystemMessage(Component.translatable("commands.reignofnether.gamerule.neutral_aggro", "/gamerule neutralAggro"));
                 MC.player.sendSystemMessage(Component.translatable("commands.reignofnether.gamerule.max_population", "/gamerule maxPopulation"));
+                MC.player.sendSystemMessage(Component.translatable("commands.reignofnether.gamerule.unit_griefing", "/gamerule doUnitGriefing"));
+                MC.player.sendSystemMessage(Component.translatable("commands.reignofnether.gamerule.player_griefing", "/gamerule doPlayerGriefing"));
+                MC.player.sendSystemMessage(Component.translatable("commands.reignofnether.gamerule.ground_y_level", "/gamerule groundYLevel"));
+                MC.player.sendSystemMessage(Component.translatable("commands.reignofnether.gamerule.flying_max_y_level", "/gamerule flyingMaxYLevel"));
+                MC.player.sendSystemMessage(Component.translatable("commands.reignofnether.gamerule.improved_pathfinding", "/gamerule improvedPathfinding"));
             }
             return 1;
         }));
@@ -147,7 +156,7 @@ public class PlayerClientEvents {
         }
 
         MC.gui.setTitle(Component.translatable("titles.reignofnether.victorious"));
-        MC.player.playSound(SoundRegistrar.VICTORY.get(), 0.5f, 1.0f);
+        //MC.player.playSound(SoundRegistrar.VICTORY.get(), 0.5f, 1.0f);
     }
 
     public static void enableRTS(String playerName) {
@@ -249,7 +258,7 @@ public class PlayerClientEvents {
         BuildingClientEvents.getSelectedBuildings().clear();
         BuildingClientEvents.getBuildings().clear();
         ResourcesClientEvents.resourcesList.clear();
-        ClientGameModeHelper.gameMode = GameMode.STANDARD;
+        ClientGameModeHelper.gameMode = ClientGameModeHelper.DEFAULT_GAMEMODE;
         SurvivalClientEvents.reset();
         if (!ClientGameModeHelper.disallowSurvival)
             ClientGameModeHelper.gameModeLocked = false;

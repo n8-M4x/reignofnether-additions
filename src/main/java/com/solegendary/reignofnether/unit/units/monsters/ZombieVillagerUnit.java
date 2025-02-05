@@ -10,6 +10,7 @@ import com.solegendary.reignofnether.research.ResearchServerEvents;
 import com.solegendary.reignofnether.research.researchItems.ResearchResourceCapacity;
 import com.solegendary.reignofnether.resources.ResourceCosts;
 import com.solegendary.reignofnether.time.NightUtils;
+import com.solegendary.reignofnether.unit.Checkpoint;
 import com.solegendary.reignofnether.unit.UnitClientEvents;
 import com.solegendary.reignofnether.unit.goals.*;
 import com.solegendary.reignofnether.unit.interfaces.ArmSwingingUnit;
@@ -17,7 +18,7 @@ import com.solegendary.reignofnether.unit.interfaces.AttackerUnit;
 import com.solegendary.reignofnether.unit.interfaces.Unit;
 import com.solegendary.reignofnether.unit.interfaces.WorkerUnit;
 import com.solegendary.reignofnether.ability.Ability;
-import com.solegendary.reignofnether.unit.units.modelling.VillagerUnitModel;
+import com.solegendary.reignofnether.unit.modelling.models.VillagerUnitModel;
 import com.solegendary.reignofnether.unit.units.villagers.VillagerUnit;
 import com.solegendary.reignofnether.util.Faction;
 import de.n8M4.building.buildings.monsters.MonsterMine;
@@ -53,17 +54,8 @@ import java.util.List;
 
 public class ZombieVillagerUnit extends Vindicator implements Unit, WorkerUnit, AttackerUnit, ArmSwingingUnit {
     // region
-    private final ArrayList<BlockPos> checkpoints = new ArrayList<>();
-    private int checkpointTicksLeft = UnitClientEvents.CHECKPOINT_TICKS_MAX;
-    public ArrayList<BlockPos> getCheckpoints() { return checkpoints; };
-    public int getCheckpointTicksLeft() { return checkpointTicksLeft; }
-    public void setCheckpointTicksLeft(int ticks) { checkpointTicksLeft = ticks; }
-    private boolean isCheckpointGreen = true;
-    public boolean isCheckpointGreen() { return isCheckpointGreen; };
-    public void setIsCheckpointGreen(boolean green) { isCheckpointGreen = green; };
-    private int entityCheckpointId = -1;
-    public int getEntityCheckpointId() { return entityCheckpointId; };
-    public void setEntityCheckpointId(int id) { entityCheckpointId = id; };
+    private final ArrayList<Checkpoint> checkpoints = new ArrayList<>();
+    public ArrayList<Checkpoint> getCheckpoints() { return checkpoints; };
 
     GarrisonGoal garrisonGoal;
     public GarrisonGoal getGarrisonGoal() { return garrisonGoal; }
@@ -117,7 +109,8 @@ public class ZombieVillagerUnit extends Vindicator implements Unit, WorkerUnit, 
     public float getMovementSpeed() {return movementSpeed;}
     public float getUnitMaxHealth() {return maxHealth;}
     public float getUnitArmorValue() {return armorValue;}
-    public int getPopCost() {return popCost;}
+    @Nullable
+    public int getPopCost() {return ResourceCosts.ZOMBIE_VILLAGER.population;}
     public boolean getWillRetaliate() {return willRetaliate;}
     public int getAttackCooldown() {return (int) (20 / attacksPerSecond);}
     public float getAttacksPerSecond() {return attacksPerSecond;}
@@ -148,7 +141,6 @@ public class ZombieVillagerUnit extends Vindicator implements Unit, WorkerUnit, 
     final static public float maxHealth = 25.0f;
     final static public float armorValue = 0.0f;
     final static public float movementSpeed = 0.25f;
-    final static public int popCost = ResourceCosts.ZOMBIE_VILLAGER.population;
     public int maxResources = 100;
 
     private final List<AbilityButton> abilityButtons = new ArrayList<>();
@@ -178,26 +170,31 @@ public class ZombieVillagerUnit extends Vindicator implements Unit, WorkerUnit, 
         return (this.getGatherResourceGoal().isGathering() || this.getBuildRepairGoal().isBuilding());
     }
 
+    public static List<AbilityButton> getBuildingButtons() {
+        return List.of(
+            Mausoleum.getBuildButton(Keybindings.keyQ),
+            SpruceStockpile.getBuildButton(Keybindings.keyW),
+            HauntedHouse.getBuildButton(Keybindings.keyE),
+            PumpkinFarm.getBuildButton(Keybindings.keyR),
+            MonsterMine.getBuildButton(Keybindings.keyF),
+            MonsterWall.getBuildButton(Keybindings.keyG),
+            DarkWatchtower.getBuildButton(Keybindings.keyT),
+            Graveyard.getBuildButton(Keybindings.keyY),
+            Dungeon.getBuildButton(Keybindings.keyU),
+            SpiderLair.getBuildButton(Keybindings.keyI),
+            SlimePit.getBuildButton(Keybindings.keyO),
+            Laboratory.getBuildButton(Keybindings.keyP),
+            Stronghold.getBuildButton(Keybindings.keyL),
+            SpruceBridge.getBuildButton(Keybindings.keyC),
+            SculkCatalyst.getBuildButton(Keybindings.keyV)
+        );
+    }
+
     public ZombieVillagerUnit(EntityType<? extends Vindicator> entityType, Level level) {
         super(entityType, level);
 
         if (level.isClientSide()) {
-            AbilityButton mausoleumButton = Mausoleum.getBuildButton(Keybindings.keyQ);
-            mausoleumButton.isEnabled = () -> !BuildingUtils.doesPlayerOwnCapitol(level.isClientSide(), getOwnerName());
-            this.abilityButtons.add(mausoleumButton);
-            this.abilityButtons.add(SpruceStockpile.getBuildButton(Keybindings.keyW));
-            this.abilityButtons.add(HauntedHouse.getBuildButton(Keybindings.keyE));
-            this.abilityButtons.add(PumpkinFarm.getBuildButton(Keybindings.keyR));
-            this.abilityButtons.add(MonsterMine.getBuildButton(Keybindings.keyF));
-            this.abilityButtons.add(MonsterWall.getBuildButton(Keybindings.keyG));
-            this.abilityButtons.add(DarkWatchtower.getBuildButton(Keybindings.keyT));
-            this.abilityButtons.add(Graveyard.getBuildButton(Keybindings.keyY));
-            this.abilityButtons.add(Dungeon.getBuildButton(Keybindings.keyU));
-            this.abilityButtons.add(SpiderLair.getBuildButton(Keybindings.keyI));
-            this.abilityButtons.add(Laboratory.getBuildButton(Keybindings.keyO));
-            this.abilityButtons.add(Stronghold.getBuildButton(Keybindings.keyP));
-            this.abilityButtons.add(SpruceBridge.getBuildButton(Keybindings.keyC));
-            this.abilityButtons.add(SculkCatalyst.getBuildButton(Keybindings.keyV));
+            this.abilityButtons.addAll(getBuildingButtons());
         }
     }
 
@@ -214,6 +211,7 @@ public class ZombieVillagerUnit extends Vindicator implements Unit, WorkerUnit, 
                 .add(Attributes.ATTACK_DAMAGE, VillagerUnit.attackDamage)
                 .add(Attributes.MOVEMENT_SPEED, ZombieVillagerUnit.movementSpeed)
                 .add(Attributes.MAX_HEALTH, ZombieVillagerUnit.maxHealth)
+                .add(Attributes.FOLLOW_RANGE, Unit.getFollowRange())
                 .add(Attributes.ARMOR, ZombieVillagerUnit.armorValue);
     }
 

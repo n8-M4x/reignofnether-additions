@@ -9,6 +9,7 @@ import com.solegendary.reignofnether.research.ResearchClient;
 import com.solegendary.reignofnether.research.ResearchServerEvents;
 import com.solegendary.reignofnether.research.researchItems.ResearchResourceCapacity;
 import com.solegendary.reignofnether.resources.ResourceCosts;
+import com.solegendary.reignofnether.unit.Checkpoint;
 import com.solegendary.reignofnether.unit.UnitClientEvents;
 import com.solegendary.reignofnether.unit.goals.*;
 import com.solegendary.reignofnether.unit.interfaces.ArmSwingingUnit;
@@ -42,17 +43,8 @@ import java.util.List;
 
 public class GruntUnit extends Piglin implements Unit, WorkerUnit, AttackerUnit, ArmSwingingUnit {
     // region
-    private final ArrayList<BlockPos> checkpoints = new ArrayList<>();
-    private int checkpointTicksLeft = UnitClientEvents.CHECKPOINT_TICKS_MAX;
-    public ArrayList<BlockPos> getCheckpoints() { return checkpoints; };
-    public int getCheckpointTicksLeft() { return checkpointTicksLeft; }
-    public void setCheckpointTicksLeft(int ticks) { checkpointTicksLeft = ticks; }
-    private boolean isCheckpointGreen = true;
-    public boolean isCheckpointGreen() { return isCheckpointGreen; };
-    public void setIsCheckpointGreen(boolean green) { isCheckpointGreen = green; };
-    private int entityCheckpointId = -1;
-    public int getEntityCheckpointId() { return entityCheckpointId; };
-    public void setEntityCheckpointId(int id) { entityCheckpointId = id; };
+    private final ArrayList<Checkpoint> checkpoints = new ArrayList<>();
+    public ArrayList<Checkpoint> getCheckpoints() { return checkpoints; };
 
     GarrisonGoal garrisonGoal;
     public GarrisonGoal getGarrisonGoal() { return garrisonGoal; }
@@ -106,7 +98,8 @@ public class GruntUnit extends Piglin implements Unit, WorkerUnit, AttackerUnit,
     public float getMovementSpeed() {return movementSpeed;}
     public float getUnitMaxHealth() {return maxHealth;}
     public float getUnitArmorValue() {return armorValue;}
-    public int getPopCost() {return popCost;}
+    @Nullable
+    public int getPopCost() {return ResourceCosts.GRUNT.population;}
     public boolean getWillRetaliate() {return willRetaliate;}
     public int getAttackCooldown() {return (int) (20 / attacksPerSecond);}
     public float getAttacksPerSecond() {return attacksPerSecond;}
@@ -137,7 +130,6 @@ public class GruntUnit extends Piglin implements Unit, WorkerUnit, AttackerUnit,
     final static public float maxHealth = 25.0f;
     final static public float armorValue = 0.0f;
     final static public float movementSpeed = 0.25f;
-    final static public int popCost = ResourceCosts.GRUNT.population;
     public int maxResources = 100;
 
     private final List<AbilityButton> abilityButtons = new ArrayList<>();
@@ -165,23 +157,28 @@ public class GruntUnit extends Piglin implements Unit, WorkerUnit, AttackerUnit,
         return (this.getGatherResourceGoal().isGathering() || this.getBuildRepairGoal().isBuilding());
     }
 
+    public static List<AbilityButton> getBuildingButtons() {
+        return List.of(
+            CentralPortal.getBuildButton(Keybindings.keyQ),
+            Portal.getBuildButton(Keybindings.keyW),
+            NetherwartFarm.getBuildButton(Keybindings.keyE),
+            PiglinMine.getBuildButton(Keybindings.keyF),
+            PiglinWall.getBuildButton(Keybindings.keyG),
+            Bastion.getBuildButton(Keybindings.keyR),
+            HoglinStables.getBuildButton(Keybindings.keyT),
+            FlameSanctuary.getBuildButton(Keybindings.keyY),
+            WitherShrine.getBuildButton(Keybindings.keyU),
+            BasaltSprings.getBuildButton(Keybindings.keyI),
+            Fortress.getBuildButton(Keybindings.keyO),
+            BlackstoneBridge.getBuildButton(Keybindings.keyC)
+        );
+    }
+
     public GruntUnit(EntityType<? extends Piglin> entityType, Level level) {
         super(entityType, level);
 
         if (level.isClientSide()) {
-            AbilityButton centralPortalButton = CentralPortal.getBuildButton(Keybindings.keyQ);
-            centralPortalButton.isEnabled = () -> !BuildingUtils.doesPlayerOwnCapitol(level.isClientSide(), getOwnerName());
-            this.abilityButtons.add(centralPortalButton);
-            this.abilityButtons.add(Portal.getBuildButton(Keybindings.keyW));
-            this.abilityButtons.add(NetherwartFarm.getBuildButton(Keybindings.keyE));
-            this.abilityButtons.add(PiglinMine.getBuildButton(Keybindings.keyF));
-            this.abilityButtons.add(PiglinWall.getBuildButton(Keybindings.keyG));
-            this.abilityButtons.add(Bastion.getBuildButton(Keybindings.keyR));
-            this.abilityButtons.add(HoglinStables.getBuildButton(Keybindings.keyT));
-            this.abilityButtons.add(FlameSanctuary.getBuildButton(Keybindings.keyY));
-            this.abilityButtons.add(WitherShrine.getBuildButton(Keybindings.keyU));
-            this.abilityButtons.add(Fortress.getBuildButton(Keybindings.keyI));
-            this.abilityButtons.add(BlackstoneBridge.getBuildButton(Keybindings.keyC));
+            this.abilityButtons.addAll(getBuildingButtons());
         }
     }
 
@@ -198,6 +195,7 @@ public class GruntUnit extends Piglin implements Unit, WorkerUnit, AttackerUnit,
                 .add(Attributes.ATTACK_DAMAGE, GruntUnit.attackDamage)
                 .add(Attributes.MOVEMENT_SPEED, GruntUnit.movementSpeed)
                 .add(Attributes.MAX_HEALTH, GruntUnit.maxHealth)
+                .add(Attributes.FOLLOW_RANGE, Unit.getFollowRange())
                 .add(Attributes.ARMOR, GruntUnit.armorValue);
     }
 
@@ -236,9 +234,8 @@ public class GruntUnit extends Piglin implements Unit, WorkerUnit, AttackerUnit,
     @Override
     protected void registerGoals() {
         initialiseGoals();
-        this.goalSelector.addGoal(2, usePortalGoal);
-
         this.goalSelector.addGoal(1, new FloatGoal(this));
+        this.goalSelector.addGoal(2, usePortalGoal);
         this.goalSelector.addGoal(2, attackGoal);
         this.goalSelector.addGoal(2, buildRepairGoal);
         this.goalSelector.addGoal(2, gatherResourcesGoal);
