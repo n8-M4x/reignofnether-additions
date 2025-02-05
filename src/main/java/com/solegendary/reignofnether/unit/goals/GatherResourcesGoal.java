@@ -308,34 +308,9 @@ public class GatherResourcesGoal extends MoveToTargetBlockGoal {
                         else if (ResourceSources.getBlockResourceName(getGatherTarget(), mob.level) == ResourceName.ORE)
                             expName = ResourceName.ORE;
 
-                        if (mob.level.destroyBlock(data.gatherTarget, false)) {
 
-                            if (mob instanceof VillagerUnit vUnit) {
-                                if (expName == ResourceName.FOOD)
-                                    vUnit.incrementFarmerExp();
-                                else if (expName == ResourceName.WOOD)
-                                    vUnit.incrementLumberjackExp();
-                                else if (expName == ResourceName.ORE)
-                                    vUnit.incrementMinerExp();
-                            }
-
-                            // replace workers' mine ores with cobble to prevent creating potholes
-                            if (data.targetResourceSource.resourceName == ResourceName.ORE) {
-                                BlockState replaceBs;
-                                if (BuildingUtils.isInNetherRange(mob.level.isClientSide(), data.gatherTarget))
-                                    replaceBs = BlockRegistrar.WALKABLE_MAGMA_BLOCK.get().defaultBlockState();
-                                else if (bsTarget.getBlock().getName().getString().toLowerCase().contains("deepslate"))
-                                    replaceBs = Blocks.COBBLED_DEEPSLATE.defaultBlockState();
-                                else
-                                    replaceBs = Blocks.COBBLESTONE.defaultBlockState();
-                                this.mob.level.setBlockAndUpdate(data.gatherTarget, replaceBs);
-                            }
-
-                            // prioritise gathering adjacent targets first
-                            data.todoGatherTargets.remove(data.gatherTarget);
-                            for (BlockPos pos : MiscUtil.findAdjacentBlocks(data.gatherTarget, BLOCK_CONDITION))
-                                if (!data.todoGatherTargets.contains(pos))
-                                    data.todoGatherTargets.add(pos);
+                        if (data.targetFarm != null && data.targetFarm.name.contains("Mine")) {
+                            // replace with ore block, so it never runs out of core
 
                             Unit unit = (Unit) mob;
                             unit.getItems().add(new ItemStack(data.targetResourceSource.items.get(0)));
@@ -344,8 +319,46 @@ public class GatherResourcesGoal extends MoveToTargetBlockGoal {
                             // if at max resources, go to drop off automatically, then return to this gather goal
                             if (Unit.atThresholdResources(unit))
                                 saveAndReturnResources();
+                        } else {
+                            if (mob.level.destroyBlock(data.gatherTarget, false)) {
 
-                            removeGatherTarget();
+                                if (mob instanceof VillagerUnit vUnit) {
+                                    if (expName == ResourceName.FOOD)
+                                        vUnit.incrementFarmerExp();
+                                    else if (expName == ResourceName.WOOD)
+                                        vUnit.incrementLumberjackExp();
+                                    else if (expName == ResourceName.ORE)
+                                        vUnit.incrementMinerExp();
+                                }
+
+                                // replace workers' mine ores with cobble to prevent creating potholes
+                                if (data.targetResourceSource.resourceName == ResourceName.ORE) {
+                                    BlockState replaceBs;
+                                    if (BuildingUtils.isInNetherRange(mob.level.isClientSide(), data.gatherTarget))
+                                        replaceBs = BlockRegistrar.WALKABLE_MAGMA_BLOCK.get().defaultBlockState();
+                                    else if (bsTarget.getBlock().getName().getString().toLowerCase().contains("deepslate"))
+                                        replaceBs = Blocks.COBBLED_DEEPSLATE.defaultBlockState();
+                                    else
+                                        replaceBs = Blocks.COBBLESTONE.defaultBlockState();
+                                    this.mob.level.setBlockAndUpdate(data.gatherTarget, replaceBs);
+                                }
+
+                                // prioritise gathering adjacent targets first
+                                data.todoGatherTargets.remove(data.gatherTarget);
+                                for (BlockPos pos : MiscUtil.findAdjacentBlocks(data.gatherTarget, BLOCK_CONDITION))
+                                    if (!data.todoGatherTargets.contains(pos))
+                                        data.todoGatherTargets.add(pos);
+
+                                Unit unit = (Unit) mob;
+                                unit.getItems().add(new ItemStack(data.targetResourceSource.items.get(0)));
+                                UnitSyncClientboundPacket.sendSyncResourcesPacket(unit);
+
+                                // if at max resources, go to drop off automatically, then return to this gather goal
+                                if (Unit.atThresholdResources(unit))
+                                    saveAndReturnResources();
+
+                                removeGatherTarget();
+                            }
                         }
                     }
                 }

@@ -137,6 +137,17 @@ public class ReignOfNetherCommonConfigs {
         ResearchCosts.RESEARCH_CUBE_MAGMA.define(BUILDER);
         ResearchCosts.RESEARCH_SOUL_FIREBALLS.define(BUILDER);
 
+        ResearchCosts.RESEARCH_WORKER_SPEED.define(BUILDER);
+        ResearchCosts.RESEARCH_BARRACKS_PROD_TIER_I.define(BUILDER);
+        ResearchCosts.RESEARCH_BARRACKS_PROD_TIER_II.define(BUILDER);
+        ResearchCosts.RESEARCH_BARRACKS_PROD_TIER_III.define(BUILDER);
+        ResearchCosts.RESEARCH_PORTAL_PROD_TIER_I.define(BUILDER);
+        ResearchCosts.RESEARCH_PORTAL_PROD_TIER_II.define(BUILDER);
+        ResearchCosts.RESEARCH_PORTAL_PROD_TIER_III.define(BUILDER);
+        ResearchCosts.RESEARCH_GRAVEYARD_PROD_TIER_I.define(BUILDER);
+        ResearchCosts.RESEARCH_GRAVEYARD_PROD_TIER_II.define(BUILDER);
+        ResearchCosts.RESEARCH_GRAVEYARD_PROD_TIER_III.define(BUILDER);
+
         //*Enchantments*
         BUILDER.comment("Enchantment Cost Configurations");
         EnchantmentCosts.ENCHANT_MAIMING.define(BUILDER);
@@ -266,6 +277,21 @@ public class ReignOfNetherCommonConfigs {
         public static final ResourceCostConfigEntry RESEARCH_TRANSPORT_PORTAL = ResourceCostConfigEntry.Research(0, 175, 0, 40, ResourceCosts.RESEARCH_TRANSPORT_PORTAL, "Transport Portal Research Config");
         public static final ResourceCostConfigEntry RESEARCH_CUBE_MAGMA = ResourceCostConfigEntry.Research(300, 0, 300, 140, ResourceCosts.RESEARCH_CUBE_MAGMA, "Cube Magma Research Config");
         public static final ResourceCostConfigEntry RESEARCH_SOUL_FIREBALLS = ResourceCostConfigEntry.Research(0, 350, 350, 150, ResourceCosts.RESEARCH_SOUL_FIREBALLS, "Soul Fireballs Research Config");
+
+        public static final ResourceCostConfigEntry RESEARCH_WORKER_SPEED = ResourceCostConfigEntry.Research(800, 800, 800, 90, ResourceCosts.RESEARCH_WORKER_SPEED, "Research Worker Speed Config");
+
+        public static final ResourceCostConfigEntry RESEARCH_BARRACKS_PROD_TIER_I = ResourceCostConfigEntry.Research(250, 0, 0, 10, ResourceCosts.RESEARCH_BARRACKS_PROD_TIER_I, "Barracks Production Speed Tier I Config");
+        public static final ResourceCostConfigEntry RESEARCH_BARRACKS_PROD_TIER_II = ResourceCostConfigEntry.Research(650, 0, 0, 20, ResourceCosts.RESEARCH_BARRACKS_PROD_TIER_II, "Barracks Production Speed Tier II Config");
+        public static final ResourceCostConfigEntry RESEARCH_BARRACKS_PROD_TIER_III = ResourceCostConfigEntry.Research(1750, 0, 0, 30, ResourceCosts.RESEARCH_BARRACKS_PROD_TIER_III, "Barracks Production Speed Tier III Config");
+
+        public static final ResourceCostConfigEntry RESEARCH_PORTAL_PROD_TIER_I = ResourceCostConfigEntry.Research(250, 0, 0, 10, ResourceCosts.RESEARCH_PORTAL_PROD_TIER_I, "Portal Production Speed Tier I Config");
+        public static final ResourceCostConfigEntry RESEARCH_PORTAL_PROD_TIER_II = ResourceCostConfigEntry.Research(650, 0, 0, 20, ResourceCosts.RESEARCH_PORTAL_PROD_TIER_II, "Portal Production Speed Tier II Config");
+        public static final ResourceCostConfigEntry RESEARCH_PORTAL_PROD_TIER_III = ResourceCostConfigEntry.Research(1750, 0, 0, 30, ResourceCosts.RESEARCH_PORTAL_PROD_TIER_III, "Portal Production Speed Tier III Config");
+
+        public static final ResourceCostConfigEntry RESEARCH_GRAVEYARD_PROD_TIER_I = ResourceCostConfigEntry.Research(250, 0, 0, 10, ResourceCosts.RESEARCH_GRAVEYARD_PROD_TIER_I, "Graveyard Production Speed Tier I Config");
+        public static final ResourceCostConfigEntry RESEARCH_GRAVEYARD_PROD_TIER_II = ResourceCostConfigEntry.Research(650, 0, 0, 20, ResourceCosts.RESEARCH_GRAVEYARD_PROD_TIER_II, "Graveyard Production Speed Tier II Config");
+        public static final ResourceCostConfigEntry RESEARCH_GRAVEYARD_PROD_TIER_III = ResourceCostConfigEntry.Research(1750, 0, 0, 30, ResourceCosts.RESEARCH_GRAVEYARD_PROD_TIER_III, "Graveyard Production Speed Tier III Config");
+
     }
     public static class EnchantmentCosts implements Costs {
         public static final ResourceCostConfigEntry ENCHANT_MAIMING = ResourceCostConfigEntry.Enchantment(0,20, 30, ResourceCosts.ENCHANT_MAIMING, "Maiming Enchantment Config");

@@ -298,6 +298,18 @@ public class ResourceCosts {
         RESEARCH_TRANSPORT_PORTAL.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_TRANSPORT_PORTAL);
         RESEARCH_CUBE_MAGMA.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_CUBE_MAGMA);
         RESEARCH_SOUL_FIREBALLS.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_SOUL_FIREBALLS);
+
+        RESEARCH_WORKER_SPEED.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_WORKER_SPEED);
+        RESEARCH_BARRACKS_PROD_TIER_I.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_BARRACKS_PROD_TIER_I);
+        RESEARCH_BARRACKS_PROD_TIER_II.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_BARRACKS_PROD_TIER_II);
+        RESEARCH_BARRACKS_PROD_TIER_III.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_BARRACKS_PROD_TIER_III);
+        RESEARCH_PORTAL_PROD_TIER_I.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_PORTAL_PROD_TIER_I);
+        RESEARCH_PORTAL_PROD_TIER_II.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_PORTAL_PROD_TIER_II);
+        RESEARCH_PORTAL_PROD_TIER_III.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_PORTAL_PROD_TIER_III);
+        RESEARCH_GRAVEYARD_PROD_TIER_I.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_GRAVEYARD_PROD_TIER_I);
+        RESEARCH_GRAVEYARD_PROD_TIER_II.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_GRAVEYARD_PROD_TIER_II);
+        RESEARCH_GRAVEYARD_PROD_TIER_III.bakeValues(ReignOfNetherCommonConfigs.ResearchCosts.RESEARCH_GRAVEYARD_PROD_TIER_III);
+
         // ******************* ENCHANTMENTS ******************* //
         ENCHANT_MAIMING.bakeValues(ReignOfNetherCommonConfigs.EnchantmentCosts.ENCHANT_MAIMING);
         ENCHANT_QUICK_CHARGE.bakeValues(ReignOfNetherCommonConfigs.EnchantmentCosts.ENCHANT_QUICK_CHARGE);
