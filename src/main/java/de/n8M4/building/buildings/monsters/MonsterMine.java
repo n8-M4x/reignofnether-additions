@@ -34,7 +34,7 @@ import static com.solegendary.reignofnether.building.BuildingUtils.getAbsoluteBl
 public class MonsterMine extends ProductionBuilding {
 
     public final static String buildingName = "Monster Ore Mine";
-    public final static String structureName = "mine_monsters";
+    public final static String structureName = "monster_mine";
     public final static ResourceCost cost = ResourceCosts.MONSTER_MINE;
 
     private static final int ICE_CHECK_TICKS_MAX = 100;

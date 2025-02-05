@@ -34,7 +34,7 @@ import static com.solegendary.reignofnether.building.BuildingUtils.getAbsoluteBl
 public class PiglinMine extends ProductionBuilding {
 
     public final static String buildingName = "Piglin Ore Mine";
-    public final static String structureName = "PIGLIN_MINE";
+    public final static String structureName = "piglin_mine";
     public final static ResourceCost cost = ResourceCosts.PIGLIN_MINE;
 
     private static final int ICE_CHECK_TICKS_MAX = 100;

@@ -32,7 +32,7 @@ import static com.solegendary.reignofnether.building.BuildingUtils.getAbsoluteBl
 public class Mine extends ProductionBuilding {
 
     public final static String buildingName = "Ore Mine";
-    public final static String structureName = "VILLAGER_MINE";
+    public final static String structureName = "villager_mine";
     public final static ResourceCost cost = ResourceCosts.VILLAGER_MINE;
 
     private static final int ICE_CHECK_TICKS_MAX = 100;
